@@ -1,0 +1,78 @@
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <MPU6050_light.h>
+
+// Define OLED display size
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+#define OLED_RESET    -1
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+MPU6050 mpu(Wire);
+
+float accelX, accelY, accelZ;
+float gyroX, gyroY, gyroZ;
+float temperature;
+
+void setup() {
+  Wire.begin();
+  
+  // Initialize the OLED display
+  if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  
+  // Initialize MPU6050
+  Serial.begin(115200);
+  Serial.println("Initializing MPU6050...");
+  
+  if (mpu.begin() != 0) {
+    Serial.println("MPU6050 not connected!");
+    while (1);
+  }
+  
+  Serial.println("MPU6050 connected successfully!");
+
+  // Automatic calibration
+  mpu.calcOffsets(); // Automatic calibration for gyro and accel
+
+  Serial.println("Calibration complete!");
+  display.println("Calibration complete!");
+  display.display();
+  delay(2000); // Display message for 2 seconds
+  display.clearDisplay();
+}
+
+void loop() {
+  // Update MPU6050 data
+  mpu.update();
+
+  accelX = mpu.getAccX();
+  accelY = mpu.getAccY();
+  accelZ = mpu.getAccZ();
+
+  gyroX = mpu.getGyroX();
+  gyroY = mpu.getGyroY();
+  gyroZ = mpu.getGyroZ();
+
+  temperature = mpu.getTemp();
+
+  // Display the sensor values on the OLED
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Acc X: "); display.println(accelX);
+  display.print("Acc Y: "); display.println(accelY);
+  display.print("Acc Z: "); display.println(accelZ);
+  display.print("Gyro X: "); display.println(gyroX);
+  display.print("Gyro Y: "); display.println(gyroY);
+  display.print("Gyro Z: "); display.println(gyroZ);
+  display.print("Temp: "); display.println(temperature);
+  display.display();
+
+  delay(500); // Update the display every half second
+}
